@@ -1,7 +1,8 @@
 import logo from './logo.svg';
 import './App.css';
 import React, { useState } from 'react';
-import { Navbar, Nav, NavDropdown, Form, FormControl, Button, Image, OverlayTrigger, Popover, Tooltip, Row, Col} from 'react-bootstrap';
+import { Navbar, Nav, NavDropdown, Dropdown, Form, FormControl, Button, Image, OverlayTrigger, Popover, Tooltip, Row, Col, 
+  Modal} from 'react-bootstrap';
 import { Routes, Route, Link } from "react-router-dom";
 import axios from 'axios';
 import Home from './Home.js'
@@ -18,6 +19,8 @@ function App(){
   const [danhSachSanPham, sua_danhSachSanPham] = useState([]);
   const [mauSang, thayDoiMauSang] = useState(true);
   const doiMau = () => thayDoiMauSang(!mauSang);
+  const [thongBao, suaThongBao] = useState('');
+  const [signDachon, suaSignDachon] = useState(null);
 
   var diaChiServer = process.env.REACT_APP_DIACHI_SERVER
   const chaoHoi = (sdfg) => {
@@ -177,7 +180,89 @@ function App(){
       // sau đó sửa 2 thịt và tổng giỏ 7
     })
   }
+
+  const [show, setShow] = useState(false);
+  const [tenSignInUp, setTenSignInUp] = useState(false);
+  const handleClose = () => setShow(false);
+  const handleShow = (SignInUp) => {
+    setShow(true);
+    setTenSignInUp(SignInUp);
+  }
   
+  
+  const [UserDangViet, suaUserDangViet] = useState(null);
+  const [PassDangViet, suaPassDangViet] = useState(null);
+  const [PassDangViet2, suaPassDangViet2] = useState(null);
+  
+          
+  const vietTenUser = (user) => {
+    sessionStorage.setItem('user', user)
+    suaUserDangViet(user)
+  }
+  const vietPassUser = (pass) => {
+    sessionStorage.setItem('pass', pass)
+    suaPassDangViet(pass)
+  }
+  const vietPassUser2 = (pass2) => {
+    suaPassDangViet(pass2)
+  }
+
+
+  const signIn = (user, pass) => {
+    if(user==='' || pass===''){
+      suaThongBao('Chưa có User hoặc Pass')
+    }else{
+      // alert('user: '+user+', pass: '+pass)
+      var thongTinSignIn = {username: user, password: pass}
+      axios.post('http://'+diaChiServer+'/SignIn', thongTinSignIn)
+          .then(res => {
+            alert(res.data[0].username)
+            axios.get('http://'+diaChiServer+'/SanPham')
+            suaSignDachon('daVao')
+            setShow(false);
+          })
+          .catch((error) => {
+            console.log(error);
+            alert('Sai ký tên')
+          });
+
+          // axios.get('http://'+diaChiServer+'/SanPham')
+          // .then(res => {
+          //   console.log('res.data: ', res.data)
+          //   sua_danhSachSanPham(res.data)
+          // })
+          // .catch((error) => {
+          //   console.log(error);
+          // });
+
+    }
+  }
+
+  const SignOut = () => {
+    suaSignDachon(null)
+    // setShow(true);
+  }
+
+  const signUp = () => {
+    
+    if(UserDangViet === '' || PassDangViet === '' || PassDangViet2 === ''){
+      alert('Phải viết đầy đủ')
+    }else{
+      if(PassDangViet === PassDangViet2){
+        var thongTinSignUp = {username: UserDangViet, password: PassDangViet}
+        axios.post('http://'+diaChiServer+'/SignUp', thongTinSignUp)
+            .then(res => {
+              alert(res.data[0].username)
+            })
+        setShow(false);
+      }else{
+        alert('2 Pass phải giống nhau')
+      }
+    }
+
+  }
+
+
   return (
     <div className="App">
       <header className="App-header" style={{background: mauSang ?'black' :'white', color: mauSang ?'white' :'black'}}>
@@ -196,7 +281,7 @@ function App(){
               </NavDropdown>
             </Nav>
           </Navbar.Collapse>
-
+          
           <BiCart onClick={() => coHang()}/>
           
           <OverlayTrigger 
@@ -241,7 +326,54 @@ function App(){
             <FormControl type="text" placeholder="Search" className="mr-sm-2" />
             <Button variant="outline-success">Search</Button>
           </Form>
+
+          {signDachon==='daVao'
+          ?<Button onClick={() => SignOut('Sign Out')}>Sign out</Button>
+          :<div><Button onClick={() => handleShow('Sign In')}>Sign in</Button>
+          <Button onClick={() => handleShow('Sign Up')}>Sign up</Button></div>
+          }
+          
+
+          
+
+
         </Navbar>
+        
+        
+        
+
+        <Modal show={show} onHide={handleClose}>
+          <Modal.Header closeButton>
+            <Modal.Title>
+              {tenSignInUp}
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>      
+            
+          {tenSignInUp === 'Sign In'
+            ?<a>
+              Tên:
+              <Form.Control type='text' onChange={(event) => vietTenUser(event.target.value)} value={UserDangViet} />
+              Mật khẩu:
+              <Form.Control type='password' onChange={(event) => vietPassUser(event.target.value)} value={PassDangViet} />
+              <Button onClick={() => signIn(UserDangViet, PassDangViet)}>{tenSignInUp}</Button>
+            </a>
+            :<a>
+              Tên:
+              <Form.Control type='text' onChange={(event) => vietTenUser(event.target.value)} value={UserDangViet} />
+              Mật khẩu1:
+              <Form.Control type='password' onChange={(event) => vietPassUser(event.target.value)} value={PassDangViet} />
+              Mật khẩu2:
+              <Form.Control type='password' onChange={(event) => vietPassUser2(event.target.value)} value={PassDangViet2} />
+              <Button onClick={() => signUp()}>{tenSignInUp}</Button>
+            </a>
+          }
+
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={handleClose}>Close</Button>
+          </Modal.Footer>
+        </Modal>
         
         
         <Button onClick={() => chaoHoi('Xin Chào')}>Xin Chào</Button>
