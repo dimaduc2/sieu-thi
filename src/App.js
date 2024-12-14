@@ -204,7 +204,7 @@ function App(){
     suaPassDangViet(pass)
   }
   const vietPassUser2 = (pass2) => {
-    suaPassDangViet(pass2)
+    suaPassDangViet2(pass2)
   }
 
 
@@ -221,11 +221,10 @@ function App(){
             suaSignDachon('daVao')
             setShow(false);
           })
-          .catch((error) => {
-            console.log(error);
-            alert('Sai ký tên')
+          .catch((err) => {
+            alert(err.response.data.thongBao)
           });
-
+          
           // axios.get('http://'+diaChiServer+'/SanPham')
           // .then(res => {
           //   console.log('res.data: ', res.data)
@@ -248,12 +247,16 @@ function App(){
     if(UserDangViet === '' || PassDangViet === '' || PassDangViet2 === ''){
       alert('Phải viết đầy đủ')
     }else{
+      console.log(PassDangViet + ' & ' + PassDangViet2)
       if(PassDangViet === PassDangViet2){
         var thongTinSignUp = {username: UserDangViet, password: PassDangViet}
         axios.post('http://'+diaChiServer+'/SignUp', thongTinSignUp)
             .then(res => {
-              alert(res.data[0].username)
+              alert(res.data)
             })
+            .catch((err) => {
+              alert(err.response.data.thongBao)
+            });
         setShow(false);
       }else{
         alert('2 Pass phải giống nhau')
